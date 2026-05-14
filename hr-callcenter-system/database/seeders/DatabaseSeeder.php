@@ -52,5 +52,11 @@ class DatabaseSeeder extends Seeder
 
         // Seed shift types (Morning, Afternoon, Night). Run after migrations.
         $this->call(ShiftsSeeder::class);
+
+        // Seed Addis Ababa sub-cities and woredas.
+        $this->call(AddisAbabaLocationSeeder::class);
+
+        // Seed penalty schedules, violation types, and demo scenarios.
+        $this->call(PenaltyModuleSeeder::class);
     }
 }
