@@ -6,6 +6,7 @@ use App\Models\ActionType;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Actions;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -14,6 +15,8 @@ class ActionTypeResource extends Resource
     protected static ?string $model = ActionType::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
+
+    protected static ?int $navigationSort = 3;
 
     public static function getNavigationGroup(): ?string
     {
@@ -28,14 +31,17 @@ class ActionTypeResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            \Filament\Schemas\Components\Section::make('Action Type')
+            \Filament\Schemas\Components\Section::make(app()->getLocale() === 'am' ? 'የእርምጃ አይነት' : 'Action Type')
                 ->schema([
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(120)
                         ->unique(ignoreRecord: true),
-                    Forms\Components\Toggle::make('is_active')->default(true),
+                    Forms\Components\Toggle::make('is_active')
+                        ->label(app()->getLocale() === 'am' ? 'ንቁ' : 'Active')
+                        ->default(true),
                     Forms\Components\Textarea::make('description')
+                        ->label(app()->getLocale() === 'am' ? 'ማብራሪያ' : 'Description')
                         ->maxLength(5000)
                         ->columnSpanFull(),
                 ])
@@ -47,15 +53,24 @@ class ActionTypeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\IconColumn::make('is_active')->boolean()->label('Active'),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(app()->getLocale() === 'am' ? 'ስም' : 'Name')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label(app()->getLocale() === 'am' ? 'ማብራሪያ' : 'Description')
+                    ->limit(50)
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
+                    ->label(app()->getLocale() === 'am' ? 'ንቁ' : 'Active'),
             ])
             ->defaultSort('name')
             ->actions([
-                // Tables\Actions\ViewAction::make(),
-                // Tables\Actions\EditAction::make(),
-                // Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make()
+                    ->visible(fn () => auth()->user()?->hasRole('admin')),
+                Actions\DeleteAction::make()
+                    ->visible(fn () => auth()->user()?->hasRole('admin')),
             ]);
     }
 
@@ -70,7 +85,26 @@ class ActionTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        $user = auth()->user();
-        return (bool) $user && ($user->hasRole('admin') || $user->can('manage_penalty_action'));
+        return auth()->check();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return (bool) auth()->user()?->hasRole('admin');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return (bool) auth()->user()?->hasRole('admin');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return (bool) auth()->user()?->hasRole('admin');
     }
 }
