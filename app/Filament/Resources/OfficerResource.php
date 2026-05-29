@@ -1,0 +1,250 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Models\Officer;
+use App\Models\Department;
+use App\Models\User;
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
+use App\Support\Filament\PanelAccess;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+=======
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\Officers\Pages;
+
+class OfficerResource extends Resource
+{
+    protected static ?string $model = Officer::class;
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\UnitEnum|null $navigationGroup = 'Human Resources';
+    protected static ?string $navigationLabel = 'Officers';
+    protected static ?int $navigationSort = 1;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        return $query->whereHas('user', function (Builder $q) use ($user) {
+            if ($user->hasRole('admin')) {
+                $subCityId = \App\Helpers\JurisdictionHelper::getSubCityId($user);
+                $q->where('sub_city_id', $subCityId);
+            } elseif ($user->hasRole('woreda_coordinator')) {
+                $woredaId = \App\Helpers\JurisdictionHelper::getWoredaId($user);
+                $q->where('woreda_id', $woredaId);
+            } else {
+                // For other roles, restrict to their own records if applicable
+                $q->where('id', $user->id);
+            }
+        });
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->columns(1)->schema([
+            \Filament\Schemas\Components\Section::make('Officer Details')
+                ->schema([
+                    \Filament\Forms\Components\TextInput::make('badge_number')
+                        ->label('Badge Number')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(50),
+
+                    \Filament\Forms\Components\Select::make('user_id')
+                        ->label('Linked User Account')
+                        ->options(User::pluck('name', 'id'))
+                        ->searchable()
+                        ->nullable(),
+
+                    \Filament\Forms\Components\Select::make('department_id')
+                        ->label('Department')
+                        ->options(Department::pluck('name_en', 'id'))
+                        ->searchable()
+                        ->required(),
+
+                    \Filament\Forms\Components\TextInput::make('rank')
+                        ->label('Rank (English)')
+                        ->required()
+                        ->maxLength(100),
+
+                    \Filament\Forms\Components\TextInput::make('rank_am')
+                        ->label('Rank (አማርኛ)')
+                        ->maxLength(100),
+
+                    \Filament\Forms\Components\Select::make('specialization')
+                        ->label('Specialization')
+                        ->options([
+                            'general' => 'General Law Enforcement',
+                            'financial_crimes' => 'Financial Crimes',
+                            'narcotics' => 'Narcotics',
+                            'traffic' => 'Traffic Enforcement',
+                            'cybercrime' => 'Cybercrime',
+                            'investigations' => 'Criminal Investigations',
+                            'administration' => 'Administration',
+                        ])
+                        ->nullable(),
+
+                    \Filament\Forms\Components\TextInput::make('phone')
+                        ->label('Contact Phone')
+                        ->tel()
+                        ->maxLength(20),
+
+                    \Filament\Forms\Components\DatePicker::make('date_joined')
+                        ->label('Date Joined'),
+
+                    \Filament\Forms\Components\Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'active' => 'Active',
+                            'on_leave' => 'On Leave',
+                            'suspended' => 'Suspended',
+                            'retired' => 'Retired',
+                            'transferred' => 'Transferred',
+                        ])
+                        ->required()
+                        ->default('active'),
+
+                    \Filament\Forms\Components\Textarea::make('notes')
+                        ->label('Notes')
+                        ->maxLength(500)
+                        ->columnSpanFull(),
+                ])->columns(1),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('badge_number')
+                    ->label('Badge #')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable(),
+
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Officer Name')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('rank')
+                    ->label('Rank')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('department.name_en')
+                    ->label('Department')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('specialization')
+                    ->label('Specialization')
+                    ->formatStateUsing(fn($state) => ucwords(str_replace('_', ' ', $state ?? '')))
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'active' => 'success',
+                        'on_leave' => 'warning',
+                        'suspended' => 'danger',
+                        'retired', 'transferred' => 'gray',
+                        default => 'secondary',
+                    }),
+
+                Tables\Columns\TextColumn::make('date_joined')
+                    ->label('Joined')
+                    ->date()
+                    ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('department_id')
+                    ->label('Department')
+                    ->options(Department::pluck('name_en', 'id')),
+
+                SelectFilter::make('status')
+                    ->options([
+                        'active' => 'Active',
+                        'on_leave' => 'On Leave',
+                        'suspended' => 'Suspended',
+                        'retired' => 'Retired',
+                    ]),
+            ])
+            ->actions([
+                EditAction::make(),
+                ViewAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc');
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListOfficers::route('/'),
+            'create' => Pages\CreateOfficer::route('/create'),
+            'view' => Pages\ViewOfficer::route('/{record}'),
+            'edit' => Pages\EditOfficer::route('/{record}/edit'),
+        ];
+    }
+
+    public static function canViewAny(): bool
+    {
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
+        return PanelAccess::isAdmin();
+=======
+        $user = auth()->user();
+
+        return (bool) $user && (
+            $user->hasRole('admin')
+            || $user->hasRole('supervisor')
+            || $user->can('manage_users')
+        );
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
+    }
+=======
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
+}

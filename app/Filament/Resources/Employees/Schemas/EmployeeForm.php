@@ -1,0 +1,396 @@
+<?php
+
+namespace App\Filament\Resources\Employees\Schemas;
+
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+use App\Filament\Resources\Employees\EmployeeResource;
+use App\Models\Employee;
+use App\Models\SubCity;
+use App\Models\User;
+use App\Models\Woreda;
+use Filament\Schemas\Components\Section;
+=======
+use Filament\Schemas\Schema;
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Section;
+use App\Models\SubCity;
+use App\Models\Woreda;
+
+class EmployeeForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->columns(1)
+            ->schema([
+                Tabs::make('Employee Information')
+                    ->columnSpanFull()
+                    ->tabs([
+                        Tab::make('Personal Information')
+                            ->icon('heroicon-o-user')
+                            ->schema([
+                                Section::make('Photo')
+                                    ->schema([
+                                        \Filament\Forms\Components\FileUpload::make('photo')
+                                            ->label('Employee Photo')
+                                            ->image()
+                                            ->avatar()
+                                            ->imageEditor()
+                                            ->circleCropper()
+                                            ->disk('public')
+                                            ->directory('employee-photos')
+                                            ->visibility('public')
+                                            ->maxSize(2048)
+                                            ->columnSpanFull(),
+                                    ]),
+
+                                Section::make('Name in Amharic')
+                                    ->schema([
+                                        \Filament\Forms\Components\TextInput::make('first_name_am')
+                                            ->label('First Name (አማርኛ)')
+                                            ->required()
+                                            ->maxLength(255),
+                                        \Filament\Forms\Components\TextInput::make('last_name_am')
+                                            ->label('Last Name (አማርኛ)')
+                                            ->required()
+                                            ->maxLength(255),
+                                    ])->columns(2),
+
+                                Section::make('Name in English')
+                                    ->schema([
+                                        \Filament\Forms\Components\TextInput::make('first_name_en')
+                                            ->label('First Name (English)')
+                                            ->maxLength(255),
+                                        \Filament\Forms\Components\TextInput::make('last_name_en')
+                                            ->label('Last Name (English)')
+                                            ->maxLength(255),
+                                    ])->columns(2),
+
+                                Section::make('Basic Information')
+                                    ->schema([
+                                        \Filament\Forms\Components\Select::make('gender')
+                                            ->options([
+                                                'male' => 'Male (ወንድ)',
+                                                'female' => 'Female (ሴት)',
+                                            ])
+                                            ->required(),
+                                        \Filament\Forms\Components\TextInput::make('age')
+                                            ->numeric()
+                                            ->required()
+                                            ->minValue(18)
+                                            ->maxValue(100),
+                                        \Filament\Forms\Components\DatePicker::make('birth_date')
+                                            ->required()
+                                            ->maxDate(now()),
+                                        \Filament\Forms\Components\TextInput::make('birthplace')
+                                            ->required()
+                                            ->maxLength(255),
+                                    ])->columns(2),
+
+                                Section::make('Contact Information')
+                                    ->schema([
+                                        \Filament\Forms\Components\TextInput::make('email')
+                                            ->email()
+                                            ->required()
+                                            ->maxLength(255),
+                                        \Filament\Forms\Components\TextInput::make('phone')
+                                            ->required()
+                                            ->tel()
+                                            ->maxLength(20),
+                                        \Filament\Forms\Components\TextInput::make('emergency_contact')
+                                            ->tel()
+                                            ->maxLength(20),
+                                    ])->columns(2),
+
+                                Section::make('Identification')
+                                    ->schema([
+                                        \Filament\Forms\Components\TextInput::make('national_id')
+                                            ->label('National ID / Driver License')
+                                            ->maxLength(255),
+                                        \Filament\Forms\Components\TextInput::make('ethio_coder')
+                                            ->label('Ethio Coder ID')
+                                            ->maxLength(255),
+                                    ])->columns(2),
+                            ]),
+
+                        Tab::make('Location')
+                            ->icon('heroicon-o-map-pin')
+                            ->schema([
+                                \Filament\Forms\Components\Select::make('location_type')
+                                    ->label('Office Type')
+                                    ->options([
+                                        'sub_city' => 'Sub City / Woreda Office',
+                                        'head_office' => 'Head Office',
+                                    ])
+                                    ->default('sub_city')
+                                    ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                    ->dehydrated()
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set): void {
+                                        if ($state === 'head_office') {
+                                            $set('sub_city_id', null);
+                                            $set('woreda_id', null);
+                                        }
+                                    }),
+
+                                \Filament\Forms\Components\Select::make('sub_city_id')
+                                    ->label('Sub City (ክፍለ ከተማ)')
+                                    ->options(function (): array {
+                                        $query = SubCity::query()->orderBy('code');
+
+                                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+                                            $query->whereKey(EmployeeResource::assignedSubCityId());
+                                        }
+
+                                        return $query->pluck('name_am', 'id')->all();
+                                    })
+                                    ->default(fn (): ?int => EmployeeResource::assignedSubCityId())
+                                    ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                    ->dehydrated()
+                                    ->required(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->visible(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, callable $set) => $set('woreda_id', null)),
+
+                                \Filament\Forms\Components\Select::make('woreda_id')
+                                    ->label('Woreda (ወረዳ)')
+                                    ->options(function (callable $get) {
+                                        $subCityId = EmployeeResource::shouldLimitToAssignedSubCity()
+                                            ? EmployeeResource::assignedSubCityId()
+                                            : $get('sub_city_id');
+
+                                        if ($subCityId) {
+                                            return Woreda::query()
+                                                ->where('sub_city_id', $subCityId)
+                                                ->orderBy('code')
+                                                ->pluck('name_am', 'id')
+                                                ->all();
+                                        }
+                                        return [];
+                                    })
+                                    ->required(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->visible(fn (callable $get): bool => $get('location_type') !== 'head_office'),
+
+                                \Filament\Forms\Components\TextInput::make('kebele')
+                                    ->label('Kebele (ቀበሌ)')
+                                    ->maxLength(255),
+
+                                \Filament\Forms\Components\TextInput::make('house_number')
+                                    ->label('House Number (የቤት ቁጥር)')
+                                    ->maxLength(255),
+                            ])->columns(2),
+
+                        Tab::make('Employment')
+                            ->icon('heroicon-o-briefcase')
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('employee_id')
+                                    ->label('Employee ID (የሰራተኛ መለያ)')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(50),
+
+                                \Filament\Forms\Components\Select::make('position')
+                                    ->label('Position (የስራ መደብ)')
+                                    ->required()
+                                    ->options(Employee::jobPositionOptions())
+                                    ->searchable()
+                                    ->preload(),
+
+                                \Filament\Forms\Components\Select::make('job_level')
+                                    ->label('Level (የስራ መደቡ ደረጃ)')
+                                    ->options(Employee::jobLevelOptions())
+                                    ->required()
+                                    ->searchable(),
+
+                                \Filament\Forms\Components\Select::make('rank')
+                                    ->options([
+                                        'officer' => 'Officer',
+                                        'senior_officer' => 'Senior Officer',
+                                        'supervisor' => 'Supervisor',
+                                        'manager' => 'Manager',
+                                        'director' => 'Director',
+                                    ]),
+
+                                \Filament\Forms\Components\Select::make('employee_type')
+                                    ->options([
+                                        'permanent' => 'Permanent',
+                                        'contract' => 'Contract',
+                                        'temporary' => 'Temporary',
+                                    ]),
+
+                                \Filament\Forms\Components\TextInput::make('salary')
+                                    ->numeric()
+                                    ->prefix('ETB'),
+
+                                \Filament\Forms\Components\DatePicker::make('hire_date')
+                                    ->required(),
+
+                                \Filament\Forms\Components\Select::make('status')
+                                    ->options([
+                                        'active' => 'Active',
+                                        'inactive' => 'Inactive',
+                                        'on_leave' => 'On Leave',
+                                        'terminated' => 'Terminated',
+                                        'suspended' => 'Suspended',
+                                    ])
+                                    ->required()
+                                    ->default('active')
+                                    ->reactive(),
+
+                                \Filament\Forms\Components\Toggle::make('is_suspended_payment')
+                                    ->label('Suspend Payment?')
+                                    ->visible(fn($get) => $get('status') === 'suspended'),
+
+                                \Filament\Forms\Components\TextInput::make('suspension_reason')
+                                    ->visible(fn($get) => $get('status') === 'suspended'),
+
+                                \Filament\Forms\Components\DatePicker::make('suspension_date')
+                                    ->visible(fn($get) => $get('status') === 'suspended'),
+
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+                            ])->columns(['default' => 2]),
+
+                        Tab::make('Account')
+                            ->icon('heroicon-o-key')
+                            ->schema([
+                                Section::make('Login & Role')
+                                    ->schema([
+                                        \Filament\Forms\Components\Toggle::make('create_system_user')
+                                            ->label('Create system login for this paramilitary')
+                                            ->default(fn (): bool => ! EmployeeResource::shouldLimitToAssignedSubCity())
+                                            ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                            ->dehydrated()
+                                            ->reactive()
+                                            ->afterStateHydrated(function ($state, callable $set, ?Model $record) {
+                                                if ($record) {
+                                                    $set('create_system_user', (bool) $record->user);
+                                                }
+                                            }),
+                                        \Filament\Forms\Components\TextInput::make('user_username')
+                                            ->label('Username')
+                                            ->helperText('Used to sign in to the admin dashboard.')
+                                            ->default(fn (callable $get) => $get('employee_id') ?: $get('email'))
+                                            ->afterStateHydrated(function ($state, callable $set, ?Model $record) {
+                                                if ($record?->user?->username) {
+                                                    $set('user_username', $record->user->username);
+                                                }
+                                            })
+                                            ->maxLength(255)
+                                            ->required(fn (callable $get) => (bool) $get('create_system_user'))
+                                            ->unique(
+                                                table: User::class,
+                                                column: 'username',
+                                                ignorable: fn (?Model $record) => $record?->user
+                                            )
+                                            ->visible(fn (callable $get) => (bool) $get('create_system_user')),
+                                        \Filament\Forms\Components\Placeholder::make('login_username')
+                                            ->label('Login')
+                                            ->content(fn (callable $get) => $get('user_username') ?: ($get('email') ?: '-'))
+                                            ->helperText('You can sign in using username or email.'),
+                                        \Filament\Forms\Components\TextInput::make('user_password')
+                                            ->label('Password')
+                                            ->password()
+                                            ->revealable()
+                                            ->required(fn (callable $get, ?Model $record) => (bool) $get('create_system_user') && ! $record?->user)
+                                            ->dehydrated()
+                                            ->minLength(6)
+                                            ->visible(fn (callable $get) => (bool) $get('create_system_user')),
+                                        \Filament\Forms\Components\Select::make('user_roles')
+                                            ->label('Role(s)')
+                                            ->multiple()
+                                            ->options(fn () => Role::query()->orderBy('name')->pluck('name', 'name')->all())
+                                            ->preload()
+                                            ->afterStateHydrated(function ($state, callable $set, ?Model $record) {
+                                                if ($record?->user) {
+                                                    $set('user_roles', $record->user->getRoleNames()->toArray());
+                                                }
+                                            })
+                                            ->dehydrated()
+                                            ->visible(fn (callable $get) => (bool) $get('create_system_user')),
+                                    ])
+                                    ->columns(['default' => 2]),
+                            ]),
+=======
+                            ])->columns(2),
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+
+                        Tab::make('Education')
+                            ->icon('heroicon-o-academic-cap')
+                            ->schema([
+                                \Filament\Forms\Components\Select::make('education_level')
+                                    ->options([
+                                        'high_school' => 'High School',
+                                        'certificate' => 'Certificate',
+                                        'diploma' => 'Diploma',
+                                        'degree' => 'Bachelor\'s Degree',
+                                        'masters' => 'Master\'s Degree',
+                                        'phd' => 'PHD',
+                                    ]),
+                                \Filament\Forms\Components\TextInput::make('field_of_study')
+                                    ->maxLength(255),
+                                \Filament\Forms\Components\TextInput::make('institution')
+                                    ->label('Educational Institution')
+                                    ->maxLength(255),
+                            ])->columns(2),
+
+                        Tab::make('Uniform Sizes')
+                            ->icon('heroicon-o-puzzle-piece')
+                            ->schema([
+<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+                                \Filament\Forms\Components\Select::make('shirt_size')
+                                    ->label('Shirt Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('pant_size')
+                                    ->label('Pant Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('shoe_size_casual')
+                                    ->label('Shoe Size (Casual)')
+                                    ->options(Employee::uniformShoeSizeOptions()),
+                                \Filament\Forms\Components\Select::make('shoe_size_leather')
+                                    ->label('Shoe Size (Leather)')
+                                    ->options(Employee::uniformShoeSizeOptions()),
+                                \Filament\Forms\Components\Select::make('hat_size')
+                                    ->label('Hat Size')
+                                    ->options(Employee::uniformHatSizeOptions()),
+                                \Filament\Forms\Components\Select::make('cloth_size')
+                                    ->label('Cloth Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('rain_cloth_size')
+                                    ->label('Rain Cloth Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('jacket_size')
+                                    ->label('Jacket Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('t_shirt_size')
+                                    ->label('T-Shirt Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                            ])->columns(['default' => 3]),
+=======
+                                \Filament\Forms\Components\TextInput::make('shirt_size')->label('Shirt Size'),
+                                \Filament\Forms\Components\TextInput::make('pant_size')->label('Pant Size'),
+                                \Filament\Forms\Components\TextInput::make('shoe_size_casual')->label('Shoe Size (Casual)'),
+                                \Filament\Forms\Components\TextInput::make('shoe_size_leather')->label('Shoe Size (Leather)'),
+                                \Filament\Forms\Components\TextInput::make('hat_size')->label('Hat Size'),
+                                \Filament\Forms\Components\TextInput::make('cloth_size')->label('Cloth Size'),
+                                \Filament\Forms\Components\TextInput::make('rain_cloth_size')->label('Rain Cloth Size'),
+                                \Filament\Forms\Components\TextInput::make('jacket_size')->label('Jacket Size'),
+                                \Filament\Forms\Components\TextInput::make('t_shirt_size')->label('T-Shirt Size'),
+                            ])->columns(3),
+>>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/Employees/Schemas/EmployeeForm.php
+
+                        Tab::make('Training')
+                            ->icon('heroicon-o-academic-cap') // or another icon
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('training_round')
+                                    ->numeric(),
+                                \Filament\Forms\Components\DatePicker::make('last_training_date'),
+                                \Filament\Forms\Components\Textarea::make('training_notes')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
+                    ]),
+            ]);
+    }
+}
