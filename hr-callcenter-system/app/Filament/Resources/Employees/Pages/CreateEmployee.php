@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Employees\Pages;
 use App\Filament\Resources\Employees\EmployeeResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Woreda;
 use Filament\Support\Enums\Width;
 use Illuminate\Validation\ValidationException;
 
@@ -21,12 +21,40 @@ class CreateEmployee extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+            $assignedSubCityId = EmployeeResource::assignedSubCityId();
+
+            if (! $assignedSubCityId) {
+                throw ValidationException::withMessages([
+                    'sub_city_id' => 'Your user account is not assigned to a sub city.',
+                ]);
+            }
+
+            $data['location_type'] = 'sub_city';
+            $data['sub_city_id'] = $assignedSubCityId;
+            $data['create_system_user'] = false;
+
+            if (filled($data['woreda_id'] ?? null) && ! Woreda::query()
+                ->whereKey($data['woreda_id'])
+                ->where('sub_city_id', $assignedSubCityId)
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'woreda_id' => 'The selected woreda does not belong to your assigned sub city.',
+                ]);
+            }
+        }
+
         $createSystemUser = (bool) ($data['create_system_user'] ?? true);
         $userPassword = $data['user_password'] ?? null;
         $userRoles = $data['user_roles'] ?? [];
         $userUsername = $data['user_username'] ?? ($data['email'] ?? null);
 
         unset($data['create_system_user'], $data['user_password'], $data['user_roles'], $data['user_username']);
+
+        if (($data['location_type'] ?? null) === 'head_office') {
+            $data['sub_city_id'] = null;
+            $data['woreda_id'] = null;
+        }
 
         if ($createSystemUser) {
             if (blank($userPassword)) {

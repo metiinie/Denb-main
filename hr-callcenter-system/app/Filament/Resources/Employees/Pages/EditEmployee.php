@@ -9,8 +9,8 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Woreda;
 use Filament\Support\Enums\Width;
 use Illuminate\Validation\ValidationException;
 
@@ -35,12 +35,40 @@ class EditEmployee extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+            $assignedSubCityId = EmployeeResource::assignedSubCityId();
+
+            if (! $assignedSubCityId || (int) $record->sub_city_id !== $assignedSubCityId) {
+                throw ValidationException::withMessages([
+                    'sub_city_id' => 'You can only manage employees under your assigned sub city.',
+                ]);
+            }
+
+            $data['location_type'] = 'sub_city';
+            $data['sub_city_id'] = $assignedSubCityId;
+            $data['create_system_user'] = false;
+
+            if (filled($data['woreda_id'] ?? null) && ! Woreda::query()
+                ->whereKey($data['woreda_id'])
+                ->where('sub_city_id', $assignedSubCityId)
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'woreda_id' => 'The selected woreda does not belong to your assigned sub city.',
+                ]);
+            }
+        }
+
         $createSystemUser = (bool) ($data['create_system_user'] ?? false);
         $userPassword = $data['user_password'] ?? null;
         $userRoles = $data['user_roles'] ?? [];
         $userUsername = $data['user_username'] ?? ($data['email'] ?? null);
 
         unset($data['create_system_user'], $data['user_password'], $data['user_roles'], $data['user_username']);
+
+        if (($data['location_type'] ?? null) === 'head_office') {
+            $data['sub_city_id'] = null;
+            $data['woreda_id'] = null;
+        }
 
         $record->update($data);
 

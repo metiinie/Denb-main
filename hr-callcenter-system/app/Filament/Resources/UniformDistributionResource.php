@@ -3,8 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UniformDistributions\Pages;
+use App\Models\Employee;
 use App\Models\UniformDistribution;
 use App\Models\User;
+use App\Support\Filament\PanelAccess;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -55,12 +57,15 @@ class UniformDistributionResource extends Resource
                                 'shoe_casual' => 'Shoe Casual',
                                 'shoe_leather' => 'Shoe Leather',
                             ])
+                            ->live()
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                             ->required(),
 
-                        Forms\Components\TextInput::make('size')
+                        Forms\Components\Select::make('size')
                             ->label('Size')
+                            ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('item_type')))
                             ->required()
-                            ->maxLength(255),
+                            ->searchable(),
 
                         Forms\Components\TextInput::make('quantity')
                             ->label('Quantity')
@@ -203,5 +208,35 @@ class UniformDistributionResource extends Resource
             'view' => Pages\ViewUniformDistribution::route('/{record}'),
             'edit' => Pages\EditUniformDistribution::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows(['manage_inventory']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

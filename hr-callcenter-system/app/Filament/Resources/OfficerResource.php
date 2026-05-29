@@ -6,6 +6,7 @@ use App\Filament\Resources\Officers\Pages;
 use App\Models\Department;
 use App\Models\Officer;
 use App\Models\User;
+use App\Support\Filament\PanelAccess;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -179,5 +180,35 @@ class OfficerResource extends Resource
             'view' => Pages\ViewOfficer::route('/{record}'),
             'edit' => Pages\EditOfficer::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::isAdmin();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

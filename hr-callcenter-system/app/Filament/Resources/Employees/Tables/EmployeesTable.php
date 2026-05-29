@@ -2,6 +2,10 @@
 
 namespace App\Filament\Resources\Employees\Tables;
 
+use App\Filament\Resources\Employees\EmployeeResource;
+use App\Models\Employee;
+use App\Models\SubCity;
+use App\Models\Woreda;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -17,6 +21,12 @@ class EmployeesTable
     {
         return $table
             ->columns([
+                \Filament\Tables\Columns\ImageColumn::make('photo')
+                    ->label('Photo')
+                    ->disk('public')
+                    ->getStateUsing(fn ($record): ?string => $record->photo_url)
+                    ->circular(),
+
                 \Filament\Tables\Columns\TextColumn::make('employee_id')
                     ->label('Paramilitary ID')
                     ->searchable()
@@ -36,6 +46,17 @@ class EmployeesTable
                 \Filament\Tables\Columns\TextColumn::make('position')
                     ->label('Position')
                     ->searchable(),
+
+                \Filament\Tables\Columns\TextColumn::make('location_type')
+                    ->label('Office')
+                    ->formatStateUsing(fn (?string $state): string => $state === 'head_office' ? 'Head Office' : 'Sub City / Woreda')
+                    ->badge()
+                    ->toggleable(),
+
+                \Filament\Tables\Columns\TextColumn::make('job_level')
+                    ->label('Level')
+                    ->sortable()
+                    ->toggleable(),
 
                 \Filament\Tables\Columns\TextColumn::make('phone')
                     ->label('Phone')
@@ -68,17 +89,44 @@ class EmployeesTable
                         'on_leave' => 'On Leave',
                         'terminated' => 'Terminated',
                     ]),
+                \Filament\Tables\Filters\SelectFilter::make('location_type')
+                    ->label('Office Type')
+                    ->options([
+                        'sub_city' => 'Sub City / Woreda Office',
+                        'head_office' => 'Head Office',
+                    ]),
+                \Filament\Tables\Filters\SelectFilter::make('position')
+                    ->label('Job Position')
+                    ->options(fn () => Employee::jobPositionOptions())
+                    ->searchable(),
+                \Filament\Tables\Filters\SelectFilter::make('job_level')
+                    ->label('Level')
+                    ->options(fn () => Employee::jobLevelOptions()),
                 \Filament\Tables\Filters\TrashedFilter::make(),
 
                 \Filament\Tables\Filters\SelectFilter::make('sub_city_id')
                     ->label('Sub City')
-                    ->relationship('subCity', 'name_am')
-                    ->preload(),
+                    ->options(function (): array {
+                        $query = SubCity::query()->orderBy('code');
+
+                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+                            $query->whereKey(EmployeeResource::assignedSubCityId());
+                        }
+
+                        return $query->pluck('name_am', 'id')->all();
+                    }),
 
                 \Filament\Tables\Filters\SelectFilter::make('woreda_id')
                     ->label('Woreda')
-                    ->relationship('woreda', 'name_am')
-                    ->preload(),
+                    ->options(function (): array {
+                        $query = Woreda::query()->orderBy('code');
+
+                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+                            $query->where('sub_city_id', EmployeeResource::assignedSubCityId());
+                        }
+
+                        return $query->pluck('name_am', 'id')->all();
+                    }),
 
                 \Filament\Tables\Filters\SelectFilter::make('shirt_size')
                     ->label('Shirt Size')

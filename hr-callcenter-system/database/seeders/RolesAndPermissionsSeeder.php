@@ -34,6 +34,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_penalty_action',
             'view_reports',
             'manage_inventory',
+            'manage_employees',
 
             // Shift Management
             'view_shifts',
@@ -46,6 +47,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'approve_shift_swap',
             'submit_shift_report',
             'view_shift_reports',
+            'view_leave_requests',
+            'request_leave',
+            'review_leave_requests',
         ];
 
         foreach ($permissions as $permission) {
@@ -70,6 +74,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'verify_attendance',
             'approve_shift_swap',
             'view_shift_reports',
+            'view_leave_requests',
+            'review_leave_requests',
         ]);
 
         $roleOfficer = Role::findOrCreate('officer');
@@ -80,6 +86,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_shifts',
             'manage_attendance',
             'submit_shift_report',
+            'view_leave_requests',
+            'request_leave',
         ]);
 
         $callRecordOfficer = Role::findOrCreate('call_record_officer');
@@ -88,8 +96,17 @@ class RolesAndPermissionsSeeder extends Seeder
         $callCenterDirector = Role::findOrCreate('call_center_director');
         $callCenterDirector->givePermissionTo(['review_director_call_tips']);
 
+        $headOfficeDirector = Role::findOrCreate('head_office_director');
+        $headOfficeDirector->givePermissionTo(['review_director_call_tips', 'view_reports']);
+
+        $director = Role::findOrCreate('director');
+        $director->givePermissionTo(['review_director_call_tips', 'view_reports']);
+
         $subCityOfficer = Role::findOrCreate('sub_city_officer');
         $subCityOfficer->givePermissionTo(['manage_sub_city_call_tips']);
+
+        $subCityHr = Role::findOrCreate('sub_city_hr');
+        $subCityHr->givePermissionTo(['manage_employees']);
 
         $woredaOfficer = Role::findOrCreate('woreda_officer');
         $woredaOfficer->givePermissionTo(['manage_woreda_call_tips']);

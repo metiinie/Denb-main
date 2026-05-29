@@ -6,6 +6,7 @@ use App\Filament\Resources\QuarterlyReports\Pages;
 use App\Models\Department;
 use App\Models\QuarterlyReport;
 use App\Models\User;
+use App\Support\Filament\PanelAccess;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -229,5 +230,35 @@ class QuarterlyReportResource extends Resource
             'view' => Pages\ViewQuarterlyReport::route('/{record}'),
             'edit' => Pages\EditQuarterlyReport::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows(['view_reports']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

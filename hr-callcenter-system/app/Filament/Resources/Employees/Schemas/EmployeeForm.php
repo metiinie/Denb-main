@@ -2,7 +2,11 @@
 
 namespace App\Filament\Resources\Employees\Schemas;
 
+use App\Filament\Resources\Employees\EmployeeResource;
+use App\Models\Employee;
+use App\Models\SubCity;
 use App\Models\User;
+use App\Models\Woreda;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -22,6 +26,21 @@ class EmployeeForm
                         Tab::make('Personal')
                             ->icon('heroicon-o-user')
                             ->schema([
+                                Section::make('Photo')
+                                    ->schema([
+                                        \Filament\Forms\Components\FileUpload::make('photo')
+                                            ->label('Employee Photo')
+                                            ->image()
+                                            ->avatar()
+                                            ->imageEditor()
+                                            ->circleCropper()
+                                            ->disk('public')
+                                            ->directory('employee-photos')
+                                            ->visibility('public')
+                                            ->maxSize(2048)
+                                            ->columnSpanFull(),
+                                    ]),
+
                                 Section::make('Name in Amharic')
                                     ->schema([
                                         \Filament\Forms\Components\TextInput::make('first_name_am')
@@ -99,24 +118,62 @@ class EmployeeForm
                         Tab::make('Location')
                             ->icon('heroicon-o-map-pin')
                             ->schema([
+                                \Filament\Forms\Components\Select::make('location_type')
+                                    ->label('Office Type')
+                                    ->options([
+                                        'sub_city' => 'Sub City / Woreda Office',
+                                        'head_office' => 'Head Office',
+                                    ])
+                                    ->default('sub_city')
+                                    ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                    ->dehydrated()
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set): void {
+                                        if ($state === 'head_office') {
+                                            $set('sub_city_id', null);
+                                            $set('woreda_id', null);
+                                        }
+                                    }),
+
                                 \Filament\Forms\Components\Select::make('sub_city_id')
                                     ->label('Sub City (ክፍለ ከተማ)')
-                                    ->options(\App\Models\SubCity::all()->pluck('name_am', 'id'))
-                                    ->required()
-                                    ->reactive(),
+                                    ->options(function (): array {
+                                        $query = SubCity::query()->orderBy('code');
+
+                                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
+                                            $query->whereKey(EmployeeResource::assignedSubCityId());
+                                        }
+
+                                        return $query->pluck('name_am', 'id')->all();
+                                    })
+                                    ->default(fn (): ?int => EmployeeResource::assignedSubCityId())
+                                    ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                    ->dehydrated()
+                                    ->required(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->visible(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, callable $set) => $set('woreda_id', null)),
 
                                 \Filament\Forms\Components\Select::make('woreda_id')
                                     ->label('Woreda (ወረዳ)')
                                     ->options(function (callable $get) {
-                                        $subCityId = $get('sub_city_id');
+                                        $subCityId = EmployeeResource::shouldLimitToAssignedSubCity()
+                                            ? EmployeeResource::assignedSubCityId()
+                                            : $get('sub_city_id');
+
                                         if ($subCityId) {
-                                            return \App\Models\Woreda::where('sub_city_id', $subCityId)
-                                                ->pluck('name_am', 'id');
+                                            return Woreda::query()
+                                                ->where('sub_city_id', $subCityId)
+                                                ->orderBy('code')
+                                                ->pluck('name_am', 'id')
+                                                ->all();
                                         }
 
                                         return [];
                                     })
-                                    ->required(),
+                                    ->required(fn (callable $get): bool => $get('location_type') !== 'head_office')
+                                    ->visible(fn (callable $get): bool => $get('location_type') !== 'head_office'),
 
                                 \Filament\Forms\Components\TextInput::make('kebele')
                                     ->label('Kebele (ቀበሌ)')
@@ -136,10 +193,18 @@ class EmployeeForm
                                     ->unique(ignoreRecord: true)
                                     ->maxLength(50),
 
-                                \Filament\Forms\Components\TextInput::make('position')
+                                \Filament\Forms\Components\Select::make('position')
                                     ->label('Position (የስራ መደብ)')
                                     ->required()
-                                    ->maxLength(255),
+                                    ->options(Employee::jobPositionOptions())
+                                    ->searchable()
+                                    ->preload(),
+
+                                \Filament\Forms\Components\Select::make('job_level')
+                                    ->label('Level (የስራ መደቡ ደረጃ)')
+                                    ->options(Employee::jobLevelOptions())
+                                    ->required()
+                                    ->searchable(),
 
                                 \Filament\Forms\Components\Select::make('rank')
                                     ->options([
@@ -202,7 +267,9 @@ class EmployeeForm
                                     ->schema([
                                         \Filament\Forms\Components\Toggle::make('create_system_user')
                                             ->label('Create system login for this paramilitary')
-                                            ->default(true)
+                                            ->default(fn (): bool => ! EmployeeResource::shouldLimitToAssignedSubCity())
+                                            ->disabled(fn (): bool => EmployeeResource::shouldLimitToAssignedSubCity())
+                                            ->dehydrated()
                                             ->reactive()
                                             ->afterStateHydrated(function ($state, callable $set, ?Model $record) {
                                                 if ($record) {
@@ -278,15 +345,33 @@ class EmployeeForm
                         Tab::make('Uniform')
                             ->icon('heroicon-o-puzzle-piece')
                             ->schema([
-                                \Filament\Forms\Components\TextInput::make('shirt_size')->label('Shirt Size'),
-                                \Filament\Forms\Components\TextInput::make('pant_size')->label('Pant Size'),
-                                \Filament\Forms\Components\TextInput::make('shoe_size_casual')->label('Shoe Size (Casual)'),
-                                \Filament\Forms\Components\TextInput::make('shoe_size_leather')->label('Shoe Size (Leather)'),
-                                \Filament\Forms\Components\TextInput::make('hat_size')->label('Hat Size'),
-                                \Filament\Forms\Components\TextInput::make('cloth_size')->label('Cloth Size'),
-                                \Filament\Forms\Components\TextInput::make('rain_cloth_size')->label('Rain Cloth Size'),
-                                \Filament\Forms\Components\TextInput::make('jacket_size')->label('Jacket Size'),
-                                \Filament\Forms\Components\TextInput::make('t_shirt_size')->label('T-Shirt Size'),
+                                \Filament\Forms\Components\Select::make('shirt_size')
+                                    ->label('Shirt Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('pant_size')
+                                    ->label('Pant Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('shoe_size_casual')
+                                    ->label('Shoe Size (Casual)')
+                                    ->options(Employee::uniformShoeSizeOptions()),
+                                \Filament\Forms\Components\Select::make('shoe_size_leather')
+                                    ->label('Shoe Size (Leather)')
+                                    ->options(Employee::uniformShoeSizeOptions()),
+                                \Filament\Forms\Components\Select::make('hat_size')
+                                    ->label('Hat Size')
+                                    ->options(Employee::uniformHatSizeOptions()),
+                                \Filament\Forms\Components\Select::make('cloth_size')
+                                    ->label('Cloth Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('rain_cloth_size')
+                                    ->label('Rain Cloth Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('jacket_size')
+                                    ->label('Jacket Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
+                                \Filament\Forms\Components\Select::make('t_shirt_size')
+                                    ->label('T-Shirt Size')
+                                    ->options(Employee::uniformClothingSizeOptions()),
                             ])->columns(['default' => 3]),
 
                         Tab::make('Training')

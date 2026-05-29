@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Models\UniformInventory;
+use App\Models\Employee;
+use App\Support\Filament\PanelAccess;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -46,12 +48,14 @@ class UniformInventoryResource extends Resource
                             'protective_equipment' => 'Protective Equipment',
                             'other' => 'Other',
                         ])
+                        ->live()
+                        ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                         ->required(),
 
-                    \Filament\Forms\Components\TextInput::make('size')
+                    \Filament\Forms\Components\Select::make('size')
                         ->label('Size')
-                        ->maxLength(20)
-                        ->placeholder('e.g. M, L, XL, 42'),
+                        ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('category')))
+                        ->searchable(),
 
                     \Filament\Forms\Components\TextInput::make('quantity_in_stock')
                         ->label('Quantity in Stock')
@@ -171,7 +175,10 @@ class UniformInventoryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $lowStock = UniformInventory::whereColumn('quantity_in_stock', '<=', 'min_stock_level')->count();
+        static $lowStock = null;
+
+        $lowStock ??= UniformInventory::whereColumn('quantity_in_stock', '<=', 'min_stock_level')->count();
+
         return $lowStock > 0 ? (string) $lowStock : null;
     }
 
@@ -187,5 +194,35 @@ class UniformInventoryResource extends Resource
             'create' => Pages\CreateUniformInventory::route('/create'),
             'edit' => Pages\EditUniformInventory::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows(['manage_inventory']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

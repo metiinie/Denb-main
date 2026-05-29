@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Employees\RelationManagers;
 
+use App\Models\Employee;
 use App\Models\User;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -37,12 +38,15 @@ class UniformDistributionRelationManager extends RelationManager
                         'shoe_casual' => 'Shoe Casual',
                         'shoe_leather' => 'Shoe Leather',
                     ])
+                    ->live()
+                    ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                     ->required(),
 
-                Forms\Components\TextInput::make('size')
+                Forms\Components\Select::make('size')
                     ->label('Size')
+                    ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('item_type')))
                     ->required()
-                    ->maxLength(255),
+                    ->searchable(),
 
                 Forms\Components\TextInput::make('quantity')
                     ->label('Quantity')

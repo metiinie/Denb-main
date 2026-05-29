@@ -3,11 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\SubCity;
 use App\Models\Tip;
 use App\Models\User;
+use App\Support\Filament\PanelAccess;
 use Filament\Forms;
-use Filament\Forms\Get;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -49,9 +51,9 @@ class UserResource extends Resource
                     ->unique(ignoreRecord: true),
                 Forms\Components\Select::make('sub_city')
                     ->label('Assigned Sub City')
-                    ->options(Tip::getAddisAbabaSubCities())
+                    ->options(fn (): array => SubCity::query()->orderBy('code')->pluck('name_en', 'name_en')->all())
                     ->searchable()
-                    ->placeholder('Select sub city for sub-city/woreda officers')
+                    ->placeholder('Select sub city for Sub City HR or sub-city/woreda officers')
                     ->nullable()
                     ->live(),
                 Forms\Components\Select::make('woreda')
@@ -126,5 +128,35 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows(['manage_users']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

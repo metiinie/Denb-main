@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ComplaintResource\Pages;
 use App\Models\Complaint;
+use App\Support\Filament\PanelAccess;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -137,7 +138,7 @@ class ComplaintResource extends Resource
                     ->form([
                         \Filament\Forms\Components\Select::make('assigned_to')
                             ->label('Assign To Officer')
-                            ->options(User::pluck('name', 'id'))
+                            ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
                             ->required(),
                         \Filament\Forms\Components\Textarea::make('assignment_note')
                             ->label('Internal Instructions'),
@@ -309,7 +310,7 @@ class ComplaintResource extends Resource
                         ->form([
                             \Filament\Forms\Components\Select::make('assigned_to')
                                 ->label('Assign to Officer')
-                                ->options(User::pluck('name', 'id'))
+                                ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
                                 ->required(),
                         ])
                         ->action(function ($records, array $data) {
@@ -479,6 +480,20 @@ class ComplaintResource extends Resource
         return false;
     }
 
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows([
+            'view_complaints',
+            'manage_complaints',
+            'assign_cases',
+        ]);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
     public static function canEdit($record): bool
     {
         return false;
@@ -486,12 +501,20 @@ class ComplaintResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'pending')->count() ?: null;
+        $count = static::getPendingNavigationCount();
+
+        return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('status', 'pending')->count();
-        return $count > 10 ? 'danger' : 'warning';
+        return static::getPendingNavigationCount() > 10 ? 'danger' : 'warning';
+    }
+
+    protected static function getPendingNavigationCount(): int
+    {
+        static $count = null;
+
+        return $count ??= static::getModel()::where('status', 'pending')->count();
     }
 }

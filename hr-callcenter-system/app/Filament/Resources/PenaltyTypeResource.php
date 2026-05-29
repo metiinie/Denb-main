@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\PenaltyType;
+use App\Support\Filament\PanelAccess;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -76,7 +77,6 @@ class PenaltyTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        $user = auth()->user();
-        return (bool) $user && ($user->hasRole('admin') || $user->can('manage_penalty_action'));
+        return PanelAccess::allows(['manage_penalty_action']);
     }
 }

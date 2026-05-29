@@ -7,6 +7,7 @@ use App\Models\CaseAssignment;
 use App\Models\Complaint;
 use App\Models\Officer;
 use App\Models\User;
+use App\Support\Filament\PanelAccess;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -130,5 +131,35 @@ class CaseAssignmentResource extends Resource
             'create' => Pages\CreateCaseAssignment::route('/create'),
             'edit' => Pages\EditCaseAssignment::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return PanelAccess::allows(['assign_cases']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
     }
 }

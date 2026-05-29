@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Employees\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -19,6 +20,15 @@ class EmployeeInfolist
                     ->tabs([
                         Tab::make('Personal Information')
                             ->schema([
+                                Section::make('Photo')
+                                    ->schema([
+                                        ImageEntry::make('photo')
+                                            ->label('Employee Photo')
+                                            ->disk('public')
+                                            ->circular()
+                                            ->height(120),
+                                    ]),
+
                                 Section::make('Name Details')
                                     ->schema([
                                         TextEntry::make('first_name_am')->label('First Name (Amharic)'),
@@ -47,6 +57,9 @@ class EmployeeInfolist
                             ]),
                         Tab::make('Location')
                             ->schema([
+                                TextEntry::make('location_type')
+                                    ->label('Office Type')
+                                    ->formatStateUsing(fn (?string $state): string => $state === 'head_office' ? 'Head Office' : 'Sub City / Woreda Office'),
                                 TextEntry::make('subCity.name_am')->label('Sub City'),
                                 TextEntry::make('woreda.name_am')->label('Woreda'),
                                 TextEntry::make('kebele'),
@@ -57,6 +70,7 @@ class EmployeeInfolist
                             ->schema([
                                 TextEntry::make('employee_id')->label('Paramilitary ID'),
                                 TextEntry::make('position'),
+                                TextEntry::make('job_level')->label('Level (የስራ መደቡ ደረጃ)'),
                                 TextEntry::make('rank')->badge(),
                                 TextEntry::make('employee_type')
                                     ->formatStateUsing(fn ($state) => match ($state) {
