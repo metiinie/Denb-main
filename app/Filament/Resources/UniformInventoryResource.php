@@ -3,8 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Models\UniformInventory;
-use App\Models\Employee;
-use App\Support\Filament\PanelAccess;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -47,14 +45,12 @@ class UniformInventoryResource extends Resource
                             'protective_equipment' => 'Protective Equipment',
                             'other' => 'Other',
                         ])
-                        ->live()
-                        ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                         ->required(),
 
-                    \Filament\Forms\Components\Select::make('size')
+                    \Filament\Forms\Components\TextInput::make('size')
                         ->label('Size')
-                        ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('category')))
-                        ->searchable(),
+                        ->maxLength(20)
+                        ->placeholder('e.g. M, L, XL, 42'),
 
                     \Filament\Forms\Components\TextInput::make('quantity_in_stock')
                         ->label('Quantity in Stock')
@@ -165,15 +161,9 @@ class UniformInventoryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformInventoryResource.php
-        static $lowStock = null;
-
-        $lowStock ??= UniformInventory::whereColumn('quantity_in_stock', '<=', 'min_stock_level')->count();
-=======
         $lowStock = cache()->remember('uniform_low_stock_count', 60, function () {
             return UniformInventory::whereColumn('quantity_in_stock', '<=', 'min_stock_level')->count();
         });
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformInventoryResource.php
 
         return $lowStock > 0 ? (string) $lowStock : null;
     }
@@ -194,43 +184,16 @@ class UniformInventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformInventoryResource.php
-        return PanelAccess::allows(['manage_inventory']);
-=======
         $user = auth()->user();
 
         return (bool) $user && (
             $user->hasRole('admin')
             || $user->can('manage_inventory')
         );
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformInventoryResource.php
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformInventoryResource.php
-
-    public static function canCreate(): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canEdit($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDelete($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return static::canViewAny();
-    }
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformInventoryResource.php
 }

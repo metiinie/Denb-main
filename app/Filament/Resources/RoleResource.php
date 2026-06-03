@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RoleResource\Pages;
-use App\Support\Filament\PanelAccess;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -72,43 +71,16 @@ class RoleResource extends Resource
 
     public static function canViewAny(): bool
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/RoleResource.php
-        return PanelAccess::allows(['manage_roles']);
-=======
         $user = auth()->user();
 
         return (bool) $user && (
             $user->hasRole('admin')
             || $user->can('manage_roles')
         );
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/RoleResource.php
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/RoleResource.php
-
-    public static function canCreate(): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canEdit($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDelete($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return static::canViewAny();
-    }
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/RoleResource.php
 }

@@ -3,21 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Filament\Models\Contracts\HasAvatar;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Panel;
 use Filament\Models\Contracts\FilamentUser;
 
-<<<<<<< HEAD:hr-callcenter-system/app/Models/User.php
-class User extends Authenticatable implements HasAvatar
-=======
 class User extends Authenticatable implements FilamentUser
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Models/User.php
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -58,16 +52,6 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-<<<<<<< HEAD:hr-callcenter-system/app/Models/User.php
-    public function employee(): HasOne
-    {
-        return $this->hasOne(Employee::class);
-    }
-
-    public function getFilamentAvatarUrl(): ?string
-    {
-        return $this->employee?->photo_url;
-=======
     public function woreda()
     {
         return $this->belongsTo(Woreda::class);
@@ -82,6 +66,5 @@ class User extends Authenticatable implements FilamentUser
     {
         // For this HR system, all authenticated users with roles can access the panel.
         return true;
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Models/User.php
     }
 }

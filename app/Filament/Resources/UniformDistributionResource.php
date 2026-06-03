@@ -3,19 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UniformDistributions\Pages;
-use App\Models\Employee;
 use App\Models\UniformDistribution;
 use App\Models\Employee;
 use App\Models\User;
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformDistributionResource.php
-use App\Support\Filament\PanelAccess;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformDistributionResource.php
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -84,15 +74,12 @@ class UniformDistributionResource extends Resource
                                 'shoe_casual' => 'Shoe Casual',
                                 'shoe_leather' => 'Shoe Leather',
                             ])
-                            ->live()
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                             ->required(),
 
-                        Forms\Components\Select::make('size')
+                        Forms\Components\TextInput::make('size')
                             ->label('Size')
-                            ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('item_type')))
                             ->required()
-                            ->searchable(),
+                            ->maxLength(255),
 
                         Forms\Components\TextInput::make('quantity')
                             ->label('Quantity')
@@ -224,43 +211,16 @@ class UniformDistributionResource extends Resource
 
     public static function canViewAny(): bool
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformDistributionResource.php
-        return PanelAccess::allows(['manage_inventory']);
-=======
         $user = auth()->user();
 
         return (bool) $user && (
             $user->hasRole('admin')
             || $user->can('manage_inventory')
         );
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformDistributionResource.php
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UniformDistributionResource.php
-
-    public static function canCreate(): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canEdit($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDelete($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return static::canViewAny();
-    }
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UniformDistributionResource.php
 }

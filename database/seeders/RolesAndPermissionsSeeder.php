@@ -34,7 +34,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_penalty_action',
             'view_reports',
             'manage_inventory',
-            'manage_employees',
 
             // Penalty & Action – granular
             'create_violation_records',       // officer: record violations on the street
@@ -63,9 +62,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'approve_shift_swap',
             'submit_shift_report',
             'view_shift_reports',
-            'view_leave_requests',
-            'request_leave',
-            'review_leave_requests',
         ];
 
         foreach ($permissions as $permission) {
@@ -90,10 +86,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'verify_attendance',
             'approve_shift_swap',
             'view_shift_reports',
-<<<<<<< HEAD:hr-callcenter-system/database/seeders/RolesAndPermissionsSeeder.php
-            'view_leave_requests',
-            'review_leave_requests',
-=======
             // Penalty & Action – supervisors verify, escalate, and manage assets.
             'view_violation_records',
             'edit_violation_records',
@@ -103,7 +95,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'track_payments',
             'escalate_to_court',
             'escalate_to_task_force',
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:database/seeders/RolesAndPermissionsSeeder.php
         ]);
 
         $roleOfficer = Role::findOrCreate('officer');
@@ -114,10 +105,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_shifts',
             'manage_attendance',
             'submit_shift_report',
-<<<<<<< HEAD:hr-callcenter-system/database/seeders/RolesAndPermissionsSeeder.php
-            'view_leave_requests',
-            'request_leave',
-=======
             // Penalty & Action – officers detect violations and take action on the street.
             'create_violation_records',
             'view_violation_records',
@@ -125,7 +112,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'issue_warning_letters',
             'seize_assets',
             'manage_violators',
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:database/seeders/RolesAndPermissionsSeeder.php
         ]);
 
         $callRecordOfficer = Role::findOrCreate('call_record_officer');
@@ -134,17 +120,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $callCenterDirector = Role::findOrCreate('call_center_director');
         $callCenterDirector->givePermissionTo(['review_director_call_tips']);
 
-        $headOfficeDirector = Role::findOrCreate('head_office_director');
-        $headOfficeDirector->givePermissionTo(['review_director_call_tips', 'view_reports']);
-
-        $director = Role::findOrCreate('director');
-        $director->givePermissionTo(['review_director_call_tips', 'view_reports']);
-
         $subCityOfficer = Role::findOrCreate('sub_city_officer');
         $subCityOfficer->givePermissionTo(['manage_sub_city_call_tips']);
-
-        $subCityHr = Role::findOrCreate('sub_city_hr');
-        $subCityHr->givePermissionTo(['manage_employees']);
 
         $woredaOfficer = Role::findOrCreate('woreda_officer');
         $woredaOfficer->givePermissionTo(['manage_woreda_call_tips']);

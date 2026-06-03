@@ -5,18 +5,12 @@ namespace App\Filament\Resources;
 use App\Models\Officer;
 use App\Models\Department;
 use App\Models\User;
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
-use App\Support\Filament\PanelAccess;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-=======
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
@@ -207,9 +201,6 @@ class OfficerResource extends Resource
 
     public static function canViewAny(): bool
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
-        return PanelAccess::isAdmin();
-=======
         $user = auth()->user();
 
         return (bool) $user && (
@@ -217,34 +208,10 @@ class OfficerResource extends Resource
             || $user->hasRole('supervisor')
             || $user->can('manage_users')
         );
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/OfficerResource.php
-
-    public static function canCreate(): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canEdit($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDelete($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return static::canViewAny();
-    }
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/OfficerResource.php
 }

@@ -2,10 +2,6 @@
 
 namespace App\Filament\Resources\Employees\Tables;
 
-use App\Filament\Resources\Employees\EmployeeResource;
-use App\Models\Employee;
-use App\Models\SubCity;
-use App\Models\Woreda;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -21,12 +17,6 @@ class EmployeesTable
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\ImageColumn::make('photo')
-                    ->label('Photo')
-                    ->disk('public')
-                    ->getStateUsing(fn ($record): ?string => $record->photo_url)
-                    ->circular(),
-
                 \Filament\Tables\Columns\TextColumn::make('employee_id')
                     ->label('ID')
                     ->searchable()
@@ -46,17 +36,6 @@ class EmployeesTable
                 \Filament\Tables\Columns\TextColumn::make('position')
                     ->label('Position')
                     ->searchable(),
-
-                \Filament\Tables\Columns\TextColumn::make('location_type')
-                    ->label('Office')
-                    ->formatStateUsing(fn (?string $state): string => $state === 'head_office' ? 'Head Office' : 'Sub City / Woreda')
-                    ->badge()
-                    ->toggleable(),
-
-                \Filament\Tables\Columns\TextColumn::make('job_level')
-                    ->label('Level')
-                    ->sortable()
-                    ->toggleable(),
 
                 \Filament\Tables\Columns\TextColumn::make('phone')
                     ->label('Phone')
@@ -89,55 +68,7 @@ class EmployeesTable
                         'on_leave' => 'On Leave',
                         'terminated' => 'Terminated',
                     ]),
-                \Filament\Tables\Filters\SelectFilter::make('location_type')
-                    ->label('Office Type')
-                    ->options([
-                        'sub_city' => 'Sub City / Woreda Office',
-                        'head_office' => 'Head Office',
-                    ]),
-                \Filament\Tables\Filters\SelectFilter::make('position')
-                    ->label('Job Position')
-                    ->options(fn () => Employee::jobPositionOptions())
-                    ->searchable(),
-                \Filament\Tables\Filters\SelectFilter::make('job_level')
-                    ->label('Level')
-                    ->options(fn () => Employee::jobLevelOptions()),
                 \Filament\Tables\Filters\TrashedFilter::make(),
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/Employees/Tables/EmployeesTable.php
-
-                \Filament\Tables\Filters\SelectFilter::make('sub_city_id')
-                    ->label('Sub City')
-                    ->options(function (): array {
-                        $query = SubCity::query()->orderBy('code');
-
-                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
-                            $query->whereKey(EmployeeResource::assignedSubCityId());
-                        }
-
-                        return $query->pluck('name_am', 'id')->all();
-                    }),
-
-                \Filament\Tables\Filters\SelectFilter::make('woreda_id')
-                    ->label('Woreda')
-                    ->options(function (): array {
-                        $query = Woreda::query()->orderBy('code');
-
-                        if (EmployeeResource::shouldLimitToAssignedSubCity()) {
-                            $query->where('sub_city_id', EmployeeResource::assignedSubCityId());
-                        }
-
-                        return $query->pluck('name_am', 'id')->all();
-                    }),
-
-                \Filament\Tables\Filters\SelectFilter::make('shirt_size')
-                    ->label('Shirt Size')
-                    ->options(fn() => \App\Models\Employee::whereNotNull('shirt_size')->distinct()->pluck('shirt_size', 'shirt_size')),
-
-                \Filament\Tables\Filters\SelectFilter::make('pant_size')
-                    ->label('Pant Size')
-                    ->options(fn() => \App\Models\Employee::whereNotNull('pant_size')->distinct()->pluck('pant_size', 'pant_size')),
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/Employees/Tables/EmployeesTable.php
             ])
             ->recordActions([
                 ViewAction::make(),

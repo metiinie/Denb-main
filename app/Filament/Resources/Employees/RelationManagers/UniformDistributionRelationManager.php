@@ -2,17 +2,6 @@
 
 namespace App\Filament\Resources\Employees\RelationManagers;
 
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/Employees/RelationManagers/UniformDistributionRelationManager.php
-use App\Models\Employee;
-use App\Models\User;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/Employees/RelationManagers/UniformDistributionRelationManager.php
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -48,15 +37,12 @@ class UniformDistributionRelationManager extends RelationManager
                         'shoe_casual' => 'Shoe Casual',
                         'shoe_leather' => 'Shoe Leather',
                     ])
-                    ->live()
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('size', null))
                     ->required(),
 
-                Forms\Components\Select::make('size')
+                Forms\Components\TextInput::make('size')
                     ->label('Size')
-                    ->options(fn (callable $get): array => Employee::uniformSizeOptionsForItem($get('item_type')))
                     ->required()
-                    ->searchable(),
+                    ->maxLength(255),
 
                 Forms\Components\TextInput::make('quantity')
                     ->label('Quantity')

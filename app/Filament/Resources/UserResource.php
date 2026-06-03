@@ -3,16 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UserResource.php
-use App\Models\SubCity;
-use App\Models\Tip;
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UserResource.php
 use App\Models\User;
-use App\Support\Filament\PanelAccess;
 use Filament\Forms;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -60,27 +53,6 @@ class UserResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UserResource.php
-                Forms\Components\TextInput::make('username')
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true),
-                Forms\Components\Select::make('sub_city')
-                    ->label('Assigned Sub City')
-                    ->options(fn (): array => SubCity::query()->orderBy('code')->pluck('name_en', 'name_en')->all())
-                    ->searchable()
-                    ->placeholder('Select sub city for Sub City HR or sub-city/woreda officers')
-                    ->nullable()
-                    ->live(),
-                Forms\Components\Select::make('woreda')
-                    ->label('Assigned Woreda')
-                    ->options(Tip::getWoredaOptions())
-                    ->searchable()
-                    ->placeholder('Select woreda for woreda officers')
-                    ->nullable()
-                    ->visible(fn(Get $get) => filled($get('sub_city'))),
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UserResource.php
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn($state) => Hash::make($state))
@@ -162,43 +134,16 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UserResource.php
-        return PanelAccess::allows(['manage_users']);
-=======
         $user = auth()->user();
 
         return (bool) $user && (
             $user->hasRole('admin')
             || $user->can('manage_users')
         );
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UserResource.php
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
-<<<<<<< HEAD:hr-callcenter-system/app/Filament/Resources/UserResource.php
-
-    public static function canCreate(): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canEdit($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDelete($record): bool
-    {
-        return static::canViewAny();
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return static::canViewAny();
-    }
-=======
->>>>>>> eda5f637f61aba7a99db1ae1b51ac1ad4e697aba:app/Filament/Resources/UserResource.php
 }
