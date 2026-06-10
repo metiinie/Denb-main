@@ -1,6 +1,7 @@
 <?php
 // routes/web.php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\CallTipWorkflowController;
 use App\Http\Controllers\Public\HomeController;
