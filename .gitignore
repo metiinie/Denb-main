@@ -17,7 +17,30 @@ SE_ Internship guideline report.pdf
 spec_content.txt
 rules2.pdf
 *.log
+*.txt.bak
 .DS_Store
+
+# Temp/debug output files
+build_output.txt
+db_seed_output.txt
+seed_utf8.txt
+cookies.txt
+users.json
+
+# One-off scripts (should never be committed)
+fixer.js
+final_fixer.js
+writer.js
+
+# Test artifacts in public
+/public/test.txt
+/public/test-create.txt
+
+# Archive files
+*.zip
+
+# Forked sub-project (should be its own repo)
+/hr-callcenter-system/
 .env
 .env.backup
 .env.production
