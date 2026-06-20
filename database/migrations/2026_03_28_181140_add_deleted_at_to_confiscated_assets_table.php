@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('confiscated_assets', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        // Schema::table('confiscated_assets', function (Blueprint $table) {
+        //     $table->softDeletes();
+        // });
     }
 
     /**
